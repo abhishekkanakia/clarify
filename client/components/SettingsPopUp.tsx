@@ -15,7 +15,6 @@ const SettingsPopUp: React.FC<SettingsPopUpProps> = ({ visible, onClose }) => {
   const [newClass, setNewClass] = useState<string>('');
   const [showDropdown, setShowDropdown] = useState<boolean>(false);
 
-  // Load saved settings and classes
   useEffect(() => {
     const loadSettings = async () => {
       try {
@@ -72,7 +71,7 @@ const SettingsPopUp: React.FC<SettingsPopUpProps> = ({ visible, onClose }) => {
       <View className="flex-1 items-center justify-center bg-black/40">
         <View className="w-4/5 rounded-2xl bg-white p-6 shadow-lg dark:bg-[#1E1E1E]">
           <Text className="mb-6 text-2xl font-bold text-gray-800 dark:text-white">Settings</Text>
-          
+
           {/* Auto-save setting */}
           <View className="flex-row items-center justify-between mb-6">
             <Text className="text-lg font-medium text-gray-800 dark:text-white">Auto-Save Recordings</Text>
@@ -104,7 +103,7 @@ const SettingsPopUp: React.FC<SettingsPopUpProps> = ({ visible, onClose }) => {
           {/* Current class dropdown */}
           <View className="mb-4">
             <Text className="text-lg font-medium text-gray-800 mb-2 dark:text-white">
-              Current Class
+              Current Subject
             </Text>
             <Pressable
               onPress={() => setShowDropdown(!showDropdown)}
@@ -112,7 +111,7 @@ const SettingsPopUp: React.FC<SettingsPopUpProps> = ({ visible, onClose }) => {
                         bg-white dark:bg-[#2D2D2D] dark:border-gray-600"
             >
               <Text className="text-lg text-black dark:text-white">
-                {currentClass || 'Select a class'}
+                {currentClass || 'Select a subject'}
               </Text>
             </Pressable>
             

@@ -1,13 +1,17 @@
-import { View, Text, ScrollView, TouchableOpacity, Alert } from 'react-native';
+
+
+import { View, Text, ScrollView, TouchableOpacity, Alert, SectionList } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
-import { ChevronLeft, ChevronRight, Trash2 } from 'lucide-react-native';
+import { ChevronLeft, ChevronRight, Trash2, ChevronDown, ChevronUp } from 'lucide-react-native';
 
 export default function Recordings() {
   const [recordings, setRecordings] = useState<any[]>([]);
+  const [expandedClass, setExpandedClass] = useState<string | null>(null); // State for tracking which class is expanded
   const navigation = useNavigation();
 
+  // Fetch recordings from AsyncStorage
   useEffect(() => {
     const fetchRecordings = async () => {
       try {
@@ -22,6 +26,7 @@ export default function Recordings() {
     fetchRecordings();
   }, []);
 
+  // Handle delete action for a recording
   const handleDelete = async (indexToDelete: number) => {
     Alert.alert(
       'Delete Recording',
@@ -37,7 +42,6 @@ export default function Recordings() {
               updated.splice(indexToDelete, 1);
               setRecordings(updated);
 
-              // Save back in original order (reverse before storing)
               await AsyncStorage.setItem('audio', JSON.stringify([...updated].reverse()));
             } catch (error) {
               console.error('Failed to delete recording:', error);
@@ -46,6 +50,20 @@ export default function Recordings() {
         },
       ]
     );
+  };
+
+  // Organize recordings by class
+  const groupedRecordings = recordings.reduce((acc, rec) => {
+    const className = rec.subject;
+    if (!acc[className]) {
+      acc[className] = [];
+    }
+    acc[className].push(rec);
+    return acc;
+  }, {});
+
+  const handleToggleClass = (className: string) => {
+    setExpandedClass(expandedClass === className ? null : className); // Toggle class visibility
   };
 
   return (
@@ -63,39 +81,61 @@ export default function Recordings() {
 
       {/* Content */}
       <ScrollView>
-        {recordings.length === 0 ? (
+        {Object.keys(groupedRecordings).length === 0 ? (
           <Text className="text-base text-gray-600 dark:text-gray-400">No recordings found.</Text>
         ) : (
-          recordings.map((rec, index) => (
-            <View
-              key={index}
-              className="mb-4 rounded-xl bg-gray-100 p-4 dark:bg-[#1E1E1E]">
+          Object.keys(groupedRecordings).map((className) => (
+            <View key={className} className="mb-6">
+              {/* Class Dropdown */}
               <TouchableOpacity
-                onPress={() =>
-                  navigation.navigate('Results' as never, {
-                    insights: rec.insights,
-                    fullText: rec.fullText,
-                    recordingUri: rec.recordingUri,
-                  } as never)
-                }>
-                <View className="flex-row items-center justify-between">
-                  <Text className="text-lg font-semibold text-gray-800 dark:text-white">
-                    Recording {recordings.length - index}
-                  </Text>
-                  <ChevronRight size={20} color="#6366f1" />
-                </View>
-                <Text
-                  numberOfLines={2}
-                  className="mt-1 text-sm text-gray-600 dark:text-gray-300">
-                  {rec.fullText?.slice(0, 100)}...
-                </Text>
+                className="flex-row items-center justify-between"
+                onPress={() => handleToggleClass(className)}>
+                <Text className="text-lg font-semibold text-gray-800 dark:text-white">{className}</Text>
+                {expandedClass === className ? (
+                  <ChevronUp size={20} color="#6366f1" />
+                ) : (
+                  <ChevronDown size={20} color="#6366f1" />
+                )}
               </TouchableOpacity>
 
-              <TouchableOpacity
-                onPress={() => handleDelete(index)}
-                className="mt-2 self-end rounded-full p-1">
-                <Trash2 size={18} color="#ef4444" />
-              </TouchableOpacity>
+              {/* List of recordings under the class */}
+              {expandedClass === className && (
+                <View className="mt-2">
+                  {groupedRecordings[className].map((rec, index) => (
+                    <View
+                      key={index}
+                      className="mb-4 rounded-xl bg-gray-100 p-4 dark:bg-[#1E1E1E]">
+                      <TouchableOpacity
+                        onPress={() =>
+                          navigation.navigate('Results' as never, {
+                            subject: rec.subject,
+                            insights: rec.insights,
+                            fullText: rec.fullText,
+                            recordingUri: rec.recordingUri,
+                          } as never)
+                        }>
+                        <View className="flex-row items-center justify-between">
+                          <Text className="text-lg font-semibold text-gray-800 dark:text-white">
+                            Recording {groupedRecordings[className].length - index}
+                          </Text>
+                          <ChevronRight size={20} color="#6366f1" />
+                        </View>
+                        <Text
+                          numberOfLines={2}
+                          className="mt-1 text-sm text-gray-600 dark:text-gray-300">
+                          {rec.fullText?.slice(0, 100)}...
+                        </Text>
+                      </TouchableOpacity>
+
+                      <TouchableOpacity
+                        onPress={() => handleDelete(index)}
+                        className="mt-2 self-end rounded-full p-1">
+                        <Trash2 size={18} color="#ef4444" />
+                      </TouchableOpacity>
+                    </View>
+                  ))}
+                </View>
+              )}
             </View>
           ))
         )}

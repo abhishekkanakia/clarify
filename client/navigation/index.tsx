@@ -4,14 +4,16 @@ import Home from '../screens/home';
 import Processing from '../screens/processing';
 import Results from '../screens/results';
 import Recordings from 'screens/recordings';
+import TestPrep from 'screens/testPrep';
+
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export type RootStackParamList = {
   Home: undefined;
   Processing: { recordingUri: string };
   Results: {
-    id: string;
     recordingUri: string;
+    subject: string;
     fullText: string;
     insights: {
       summary: string;
@@ -23,6 +25,8 @@ export type RootStackParamList = {
       study_plan: { [day: string]: string };
     };
   };
+  Recordings: undefined;
+  TestPrep: undefined;
 };
 
 const Stack = createStackNavigator<RootStackParamList>();
@@ -40,6 +44,7 @@ export default function RootStack() {
         <Stack.Screen name="Processing" component={Processing} />
         <Stack.Screen name="Results" component={Results} />
         <Stack.Screen name="Recordings" component={Recordings} />
+        <Stack.Screen name="TestPrep" component={TestPrep} />
       </Stack.Navigator>
     </NavigationContainer>
   );

@@ -4,6 +4,7 @@ import { useRoute, RouteProp, useNavigation } from '@react-navigation/native';
 import { RootStackParamList } from '../navigation';
 import { Audio } from 'expo-av';
 import { MaterialIcons, Feather, Ionicons, AntDesign } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 type ProcessingScreenRouteProp = RouteProp<RootStackParamList, 'Processing'>;
 
@@ -15,7 +16,9 @@ export default function Processing() {
   const [status, setStatus] = useState('Processing your recording...');
   const [sound, setSound] = useState<Audio.Sound | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const subject = route.params.subject || 'Other';
   const [transcriptionResult, setTranscriptionResult] = useState<{
+    class: string;
     recordingUri: string;
     full_transcription: string;
     insights: {
@@ -63,8 +66,10 @@ export default function Processing() {
       if (!result.success) {
         throw new Error(result.error || 'Transcription failed');
       }
-
+      const settings = await AsyncStorage.getItem('settings');
+      const className = settings ? JSON.parse(settings).class : 'Other';
       return {
+        class: subject,
         recordingUri: recordingUri,
         full_transcription: result.full_transcription,
         insights: result.insights,
@@ -78,6 +83,7 @@ export default function Processing() {
   const navigateToResults = () => {
     if (transcriptionResult) {
       navigation.navigate('Results', {
+        subject: transcriptionResult.class,
         recordingUri: transcriptionResult.recordingUri,
         insights: transcriptionResult.insights,
         fullText: transcriptionResult.full_transcription,

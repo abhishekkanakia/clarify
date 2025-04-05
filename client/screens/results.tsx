@@ -15,7 +15,7 @@ interface ResultsProps {
 }
 
 export default function Results({ route }: ResultsProps) {
-  const { insights, fullText, recordingUri } = route.params;
+  const { insights, fullText, recordingUri, subject } = route.params;
   const [sound, setSound] = useState<Audio.Sound>();
   const [isPlaying, setIsPlaying] = useState(false);
   const [position, setPosition] = useState(0);
@@ -24,7 +24,6 @@ export default function Results({ route }: ResultsProps) {
 
   useEffect(() => {
     return () => {
-      // Clean up the audio player when component unmounts
       if (sound) {
         sound.unloadAsync();
       }
@@ -117,6 +116,7 @@ export default function Results({ route }: ResultsProps) {
   const saveAudio = async () => {
     try {
       const audioData = {
+        subject: subject,
         recordingUri: recordingUri,
         fullText: fullText,
         insights: insights,

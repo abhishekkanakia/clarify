@@ -1,186 +1,98 @@
 import express from "express";
 import type { Request, Response } from "express";
-import multer from "multer";
 import cors from "cors";
-import fs from "fs";
-import path from "path";
 import axios from "axios";
-import FormData from "form-data";
 import Config from "./config/config.ts";
 
 const app = express();
 
-// Middleware
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Constants
-const UPLOAD_FOLDER = "uploads";
-const MAX_FILE_SIZE = 25 * 1024 * 1024; // 25MB
-
-// Create uploads directory if it doesn't exist
-if (!fs.existsSync(UPLOAD_FOLDER)) {
-  fs.mkdirSync(UPLOAD_FOLDER, { recursive: true });
-}
-
-// Configure multer storage
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, UPLOAD_FOLDER);
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    cb(null, uniqueSuffix + path.extname(file.originalname));
-  },
-});
-
-const upload = multer({
-  storage,
-  limits: {
-    fileSize: MAX_FILE_SIZE,
-  },
-});
-
 /**
- * Generates full lecture insights using OpenAI
- * @param text The transcribed lecture text
- * @returns Promise<object> AI-generated lecture insights
+ * GET /test-prep
+ * Generates comprehensive test preparation material for a given subject
  */
-async function generateInsights(text: string): Promise<any> {
-  if (!text || text.trim().length === 0) {
-    throw new Error("Text cannot be empty");
-  }
-
+app.get("/test-prep", async (req: Request, res: Response) => {
   try {
+    const { subject, level } = req.query;
+
+    if (!subject) {
+      res.status(400).json({ error: "Subject is required" });
+      return;
+    }
+
     const prompt = `
-You are an assistant helping a student understand a lecture. The lecture content is:
+Create a comprehensive test preparation guide for ${subject} at the ${
+      level || "University"
+    } level.
+Respond with a JSON object containing the following sections:
 
-"""${text}"""
+1. keyConcepts: Array of 5-8 most important concepts the student should master
+2. formulas: Array of key formulas, equations, or essential facts
+3. studyStrategies: Array of 3-5 effective study techniques for this subject
+4. commonQuestions: Array of 4-6 common test questions or problem types
 
-Please return a JSON object with the following structure:
-
-{
-  "summary": "Concise summary of the lecture",
-  "key_points": ["Bullet point 1", "Bullet point 2", "..."],
-  "test_questions": ["What is...?", "How does...?", "..."],
-  "glossary": [{ "term": "Term1", "definition": "..." }, { "term": "Term2", "definition": "..." }],
-  "lecture_structure": ["00:00 - Intro to...", "03:25 - Discussion on..."],
-  "action_items": ["Review concept A", "Practice problem B"],
-  "study_plan": {
-    "Day 1": "Review notes + glossary",
-    "Day 2": "Practice questions + reread summary"
-  }
-}
-Only return valid JSON. Do not include extra explanation.
-    `.trim();
+Format your response as a valid JSON object with only these properties. Do not include any additional commentary or explanations outside of the JSON structure.
+`.trim();
 
     const response = await axios.post(
       "https://api.openai.com/v1/chat/completions",
       {
         model: "gpt-3.5-turbo",
-        messages: [{ role: "user", content: prompt }],
-        max_tokens: 800,
+        messages: [
+          {
+            role: "system",
+            content:
+              "You are an expert academic tutor creating test preparation materials. Respond with a valid JSON object containing only the requested properties.",
+          },
+          {
+            role: "user",
+            content: prompt,
+          },
+        ],
         temperature: 0.5,
+        response_format: { type: "json_object" },
       },
       {
         headers: {
-          Authorization: `Bearer ${Config.OPENAI_API_KEY}`,
           "Content-Type": "application/json",
+          Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
         },
-        timeout: 20000,
       }
     );
 
-    const jsonText = response.data.choices?.[0]?.message?.content ?? "";
-    return JSON.parse(jsonText);
-  } catch (error) {
-    console.error("Error generating insights:", error);
-    throw new Error(
-      `Failed to generate insights: ${
-        error instanceof Error ? error.message : String(error)
-      }`
-    );
-  }
-}
+    const prepMaterial = response.data.choices[0]?.message?.content;
 
-/**
- * POST /transcribe
- * Transcribes audio file and provides AI-powered lecture insights
- */
-app.post(
-  "/transcribe",
-  upload.single("file"),
-  async (req: Request, res: Response): Promise<void> => {
-    if (!req.file) {
-      res.status(400).json({
-        success: false,
-        error: "No file uploaded",
-      });
+    if (!prepMaterial) {
+      res
+        .status(500)
+        .json({ error: "Failed to generate test preparation material" });
       return;
     }
 
-    const filepath = path.join(UPLOAD_FOLDER, req.file.filename);
-    console.log("File uploaded to:", filepath);
-
+    let testPrepData;
     try {
-      if (!fs.existsSync(filepath)) {
-        throw new Error("Uploaded file not found");
-      }
-
-      const fileStats = fs.statSync(filepath);
-      if (fileStats.size === 0) {
-        throw new Error("Uploaded file is empty");
-      }
-
-      const fileStream = fs.createReadStream(filepath);
-      const formData = new FormData();
-      formData.append("file", fileStream);
-      formData.append("language", "english");
-      formData.append("response_format", "json");
-
-      const headers = {
-        Authorization: `Bearer ${Config.LEMONFOX_API_KEY}`,
-        ...formData.getHeaders(),
-      };
-
-      const response = await axios.post(Config.LEMONFOX_API_URL, formData, {
-        headers,
-        timeout: 30000,
-      });
-
-      const transcribedText = response.data.text;
-
-      let insights = {};
-      if (transcribedText.trim().length > 0) {
-        insights = await generateInsights(transcribedText);
-      }
-
-      console.log(insights);
-
-      res.json({
-        success: true,
-        full_transcription: transcribedText,
-        insights,
-      });
+      testPrepData = JSON.parse(prepMaterial);
     } catch (error) {
-      console.error("Error processing transcription:", error);
-      res.status(500).json({
-        success: false,
-        error: "Failed to process transcription",
-        details: error instanceof Error ? error.message : String(error),
-      });
-    } finally {
-      try {
-        if (fs.existsSync(filepath)) {
-          fs.unlinkSync(filepath);
-        }
-      } catch (cleanupError) {
-        console.error("Error cleaning up file:", cleanupError);
-      }
+      console.error("Error parsing JSON response:", error);
+      res
+        .status(500)
+        .json({ error: "Failed to parse test preparation material" });
+      return;
     }
+
+    res.json({
+      subject,
+      level: level || "University",
+      ...testPrepData,
+    });
+  } catch (error) {
+    console.error("Error generating test prep:", error);
+    res.status(500).json({ error: "Internal server error" });
   }
-);
+});
 
 // Health check endpoint
 app.get("/health", (req: Request, res: Response) => {
