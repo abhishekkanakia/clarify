@@ -3,11 +3,15 @@ import { createStackNavigator } from '@react-navigation/stack';
 import Home from '../screens/home';
 import Processing from '../screens/processing';
 import Results from '../screens/results';
+import Recordings from 'screens/recordings';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export type RootStackParamList = {
   Home: undefined;
   Processing: { recordingUri: string };
   Results: {
+    id: string;
+    recordingUri: string;
     fullText: string;
     insights: {
       summary: string;
@@ -30,10 +34,12 @@ export default function RootStack() {
         initialRouteName="Home"
         screenOptions={{
           headerShown: false,
+          animation: 'fade',
         }}>
         <Stack.Screen name="Home" component={Home} />
         <Stack.Screen name="Processing" component={Processing} />
         <Stack.Screen name="Results" component={Results} />
+        <Stack.Screen name="Recordings" component={Recordings} />
       </Stack.Navigator>
     </NavigationContainer>
   );

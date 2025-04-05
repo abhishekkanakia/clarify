@@ -16,6 +16,7 @@ export default function Processing() {
   const [sound, setSound] = useState<Audio.Sound | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [transcriptionResult, setTranscriptionResult] = useState<{
+    recordingUri: string;
     full_transcription: string;
     insights: {
       summary: string;
@@ -64,6 +65,7 @@ export default function Processing() {
       }
 
       return {
+        recordingUri: recordingUri,
         full_transcription: result.full_transcription,
         insights: result.insights,
       };
@@ -76,6 +78,7 @@ export default function Processing() {
   const navigateToResults = () => {
     if (transcriptionResult) {
       navigation.navigate('Results', {
+        recordingUri: transcriptionResult.recordingUri,
         insights: transcriptionResult.insights,
         fullText: transcriptionResult.full_transcription,
       });
@@ -266,8 +269,7 @@ export default function Processing() {
             className={`h-40 w-40 items-center justify-center rounded-full ${
               isPlaying ? 'bg-indigo-500 dark:bg-indigo-600' : 'bg-indigo-400 dark:bg-indigo-500'
             }`}
-            style={{ transform: [{ scale: pulseAnim }] }}
-          >
+            style={{ transform: [{ scale: pulseAnim }] }}>
             {progress < 100 ? (
               <AntDesign name="loading1" size={40} color="white" />
             ) : isPlaying ? (
@@ -286,10 +288,10 @@ export default function Processing() {
           {progress < 30
             ? 'Preparing your audio for analysis'
             : progress < 60
-            ? 'Converting speech to text'
-            : progress < 100
-            ? 'Generating your insights'
-            : 'Processing complete!'}
+              ? 'Converting speech to text'
+              : progress < 100
+                ? 'Generating your insights'
+                : 'Processing complete!'}
         </Text>
 
         <View className="mb-4 h-3 w-full max-w-sm overflow-hidden rounded-full bg-gray-200 dark:bg-[#1E1E1E]">
@@ -305,11 +307,8 @@ export default function Processing() {
         <TouchableOpacity
           className="flex flex-row items-center rounded-full shadow-xl"
           onPress={togglePlayback}
-          activeOpacity={0.8}
-        >
-          <Text className="text-lg font-bold text-white">
-            {isPlaying ? 'Pause' : 'Play'}
-          </Text>
+          activeOpacity={0.8}>
+          <Text className="text-lg font-bold text-white">{isPlaying ? 'Pause' : 'Play'}</Text>
           <Feather name={isPlaying ? 'pause' : 'play'} size={20} color="white" className="ml-2" />
         </TouchableOpacity>
 
@@ -317,8 +316,7 @@ export default function Processing() {
           <TouchableOpacity
             className="mt-4 flex flex-row items-center rounded-full bg-indigo-500 px-6 py-3 shadow-xl dark:bg-indigo-600"
             onPress={navigateToResults}
-            activeOpacity={0.8}
-          >
+            activeOpacity={0.8}>
             <Text className="text-lg font-bold text-white">View Results</Text>
             <Feather name="chevron-right" size={20} color="white" className="ml-2" />
           </TouchableOpacity>
@@ -326,7 +324,12 @@ export default function Processing() {
 
         {progress < 100 && (
           <View className="mt-8 flex-row items-center">
-            <MaterialIcons name="hourglass-top" size={28} color="#6366f1" style={{ marginRight: 8 }} />
+            <MaterialIcons
+              name="hourglass-top"
+              size={28}
+              color="#6366f1"
+              style={{ marginRight: 8 }}
+            />
             <Text className="text-indigo-500 dark:text-indigo-400">Processing...</Text>
           </View>
         )}

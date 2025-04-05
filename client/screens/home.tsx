@@ -5,6 +5,8 @@ import { View, TouchableOpacity, Text, Alert } from 'react-native';
 import { useState, useEffect } from 'react';
 import { Audio } from 'expo-av';
 import { MaterialIcons, Feather } from '@expo/vector-icons';
+import settingsPopUp from 'components/SettingsPopUp';
+import SettingsPopUp from 'components/SettingsPopUp';
 
 type OverviewScreenNavigationProps = StackNavigationProp<RootStackParamList, 'Overview'>;
 
@@ -13,6 +15,8 @@ export default function Home() {
   const [isRecording, setIsRecording] = useState(false);
   const [permissionGranted, setPermissionGranted] = useState(false);
   const [recording, setRecording] = useState<Audio.Recording | null>(null);
+  const [showSettings, setShowSettings] = useState<boolean>(false);
+
 
   useEffect(() => {
     const askPermission = async () => {
@@ -64,7 +68,6 @@ export default function Home() {
       setRecording(null);
       setIsRecording(false);
       
-      // Navigate to loading screen with the recording URI
       navigation.navigate('Processing', { recordingUri: uri });
 
     } catch (err) {
@@ -90,6 +93,7 @@ export default function Home() {
     navigation.navigate('Recordings');
   };
 
+
   return (
     <View className="flex-1 bg-white dark:bg-[#121212] px-6 pt-16">
       <TouchableOpacity
@@ -100,7 +104,14 @@ export default function Home() {
           <Text className="text-sm font-medium text-gray-600 dark:text-gray-300">Past Recordings</Text>
         </View>
       </TouchableOpacity>
-
+      <TouchableOpacity
+        className="absolute left-6 top-20 z-10 rounded-full bg-gray-100 dark:bg-[#1E1E1E] px-5 py-3 shadow-sm"
+        onPress={() => setShowSettings(true)}>
+        <View className="flex-row items-center">
+          <MaterialIcons name="settings" size={20} color="#6B7280" style={{ marginRight: 8 }} />
+          <Text className="text-sm font-medium text-gray-600 dark:text-gray-300">Settings</Text>
+        </View>
+      </TouchableOpacity>
       <View className="flex-1 items-center justify-center">
         <View className="h-72 w-72 items-center justify-center">
           <View className={`absolute h-full w-full rounded-full ${
@@ -143,6 +154,9 @@ export default function Home() {
             : 'Hold your phone close to capture clear audio'}
         </Text>
       </View>
+      {showSettings && (
+        <SettingsPopUp onClose={() => {setShowSettings(!showSettings)}} visible={showSettings} />
+      )}
     </View>
   );
 }
