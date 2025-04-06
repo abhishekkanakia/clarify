@@ -1,7 +1,7 @@
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../navigation';
-import { View, TouchableOpacity, Text, Alert, Animated, Easing } from 'react-native';
+import { View, TouchableOpacity, Text, Alert, Animated, Easing, Image } from 'react-native';
 import { useState, useEffect, useRef } from 'react';
 import { Audio } from 'expo-av';
 import { MaterialIcons, Feather } from '@expo/vector-icons';
@@ -231,32 +231,29 @@ export default function Home() {
 
   return (
     <View className="flex-1 bg-white px-6 pt-16 dark:bg-[#121212]">
-      <TouchableOpacity
-        className="absolute right-6 top-20 z-10 rounded-full bg-gray-100 px-5 py-3 shadow-sm dark:bg-[#1E1E1E]"
-        onPress={goToRecordings}>
-        <View className="flex-row items-center">
-          <MaterialIcons name="history" size={20} color="#6B7280" style={{ marginRight: 8 }} />
-          <Text className="text-sm font-medium text-gray-600 dark:text-gray-300">
-            Past Recordings
-          </Text>
-        </View>
-      </TouchableOpacity>
-      <TouchableOpacity
-        className="absolute right-6 top-[120px] z-10 active:opacity-80"
-        onPress={() => navigation.navigate('TestPrep')}>
-        <View className="flex-row items-center rounded-full bg-indigo-600 px-5 py-3 shadow-lg shadow-indigo-600/30">
-          <MaterialIcons name="menu-book" size={20} className="mr-2 text-white" />
-          <Text className="text-sm font-semibold text-white">Test Prep</Text>
-        </View>
-      </TouchableOpacity>
-      <TouchableOpacity
-        className="absolute left-6 top-20 z-10 rounded-full bg-gray-100 px-5 py-3 shadow-sm dark:bg-[#1E1E1E]"
-        onPress={() => setShowSettings(true)}>
-        <View className="flex-row items-center">
-          <MaterialIcons name="settings" size={20} color="#6B7280" style={{ marginRight: 8 }} />
-          <Text className="text-sm font-medium text-gray-600 dark:text-gray-300">Settings</Text>
-        </View>
-      </TouchableOpacity>
+      <View className="flex-row justify-between px-2 pb-8 mt-2">
+        <TouchableOpacity
+          className="rounded-full bg-gray-100 px-5 py-3 shadow-sm dark:bg-[#1E1E1E]"
+          onPress={() => setShowSettings(true)}>
+          <MaterialIcons name="settings" size={20} color="#6B7280" />
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          className="active:opacity-80"
+          onPress={() => navigation.navigate('TestPrep')}>
+          <View className="flex-row items-center rounded-full bg-indigo-600 px-5 py-3 shadow-lg shadow-indigo-600/30">
+            <MaterialIcons name="menu-book" size={20} className="mr-2 text-white" />
+            <Text className="text-sm font-semibold text-white">Test Prep</Text>
+          </View>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          className="rounded-full bg-gray-100 px-5 py-3 shadow-sm dark:bg-[#1E1E1E]"
+          onPress={goToRecordings}>
+          <MaterialIcons name="history" size={20} color="#6B7280" />
+        </TouchableOpacity>
+      </View>
+
       <View className="flex-1 items-center justify-center">
         <View className="h-72 w-72 items-center justify-center">
           {/* Wave Animation Circles */}
